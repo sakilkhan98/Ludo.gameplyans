@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Premium Ludo Game by Sakil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ludo-red: #ff3333; --ludo-red-light: #ff7070;
+            --ludo-green: #00cc44; --ludo-green-light: #5cd685;
+            --ludo-yellow: #ffcc00; --ludo-yellow-light: #ffe066;
+            --ludo-blue: #0088ff; --ludo-blue-light: #66b3ff;
+            --ludo-ai: #cc00ff; --ludo-ai-light: #e680ff;
+            --premium-gold: #FFD700;
+            --premium-gold-dark: #B8860B;
+            --glass-bg: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 215, 0, 0.4);
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0; 
+            background: linear-gradient(-45deg, #0f0c29, #302b63, #24243e, #000000);
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex; justify-content: center; align-items: center; 
+            height: 100vh; overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+            color: white;
+        }
+
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* --- Top Menu Bar --- */
+        #top-bar {
+            position: absolute; top: 0; left: 0; width: 100%;
+            display: flex; justify-content: flex-end; padding: 15px 20px;
+            box-sizing: border-box; z-index: 2000;
+        }
+
+        .menu-container { position: relative; }
+
+        #menu-btn {
+            background: var(--glass-bg);
+            border: 2px solid var(--premium-gold);
+            color: var(--premium-gold);
+            padding: 10px 25px; border-radius: 30px; font-size: 1.1em;
+            backdrop-filter: blur(15px);
+            box-shadow: 0 0 15px rgba(255, 215, 0, 0.3), inset 0 0 10px rgba(255,215,0,0.2);
+            font-weight: 600; letter-spacing: 1px; width: auto; margin: 0; cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        #menu-btn:hover { box-shadow: 0 0 25px rgba(255, 215, 0, 0.6); transform: scale(1.05); }
+
+        #menu-content {
+            display: none; position: absolute; top: 110%; right: 0;
+            background: rgba(10, 10, 15, 0.95);
+            border: 1px solid var(--premium-gold); border-radius: 15px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.9); flex-direction: column; overflow: hidden; width: 200px;
+        }
+
+        #menu-content button {
+            background: transparent; color: white; padding: 15px; margin: 0; border-radius: 0;
+            width: 100%; text-align: left; border-bottom: 1px solid rgba(255,215,0,0.2);
+            box-shadow: none; font-size: 1em; font-family: 'Poppins', sans-serif;
+        }
+        #menu-content button:hover { background: rgba(255, 215, 0, 0.15); color: var(--premium-gold);}
+
+        /* --- Screens --- */
+        .screen {
+            display: none; width: 100%; height: 100%;
+            flex-direction: column; justify-content: center; align-items: center; padding: 10px; box-sizing: border-box;
+        }
+        #player-selection-screen { display: flex; z-index: 10;}
+        
+        h1 { 
+            color: var(--premium-gold); 
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.6), 0 0 40px rgba(255, 215, 0, 0.4); 
+            font-size: 3.5em; margin-bottom: 40px; text-align: center;
+            font-weight: 800; letter-spacing: 3px; text-transform: uppercase;
+        }
+
+        /* --- Premium Buttons --- */
+        button {
+            width: 300px; padding: 16px; margin: 12px; font-size: 1.2em; border-radius: 50px;
+            border: 2px solid transparent; color: white; cursor: pointer; font-weight: 600;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.6); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            font-family: 'Poppins', sans-serif; letter-spacing: 1px;
+            position: relative; overflow: hidden;
+        }
+        button::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(to right, transparent, rgba(255,255,255,0.3), transparent);
+            transform: skewX(-20deg); transition: 0.5s;
+        }
+        button:hover::before { left: 150%; }
+        button:hover { transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.8); }
+        button:active { transform: scale(0.95); }
+        
+        #btn-vs-ai { background: linear-gradient(135deg, var(--ludo-ai), #4a0080); border-color: var(--ludo-ai-light);}
+        #btn-2-players { background: linear-gradient(135deg, var(--ludo-red), #800000); border-color: var(--ludo-red-light);}
+        #btn-3-players { background: linear-gradient(135deg, var(--ludo-green), #004d00); border-color: var(--ludo-green-light);}
+        #btn-4-players { background: linear-gradient(135deg, var(--ludo-blue), #000066); border-color: var(--ludo-blue-light);}
+        #btn-leaderboard { background: linear-gradient(135deg, var(--premium-gold), var(--premium-gold-dark)); color: black; border-color: white;}
+
+        /* --- 3D Game Board --- */
+        #game-container { 
+            position: relative; width: 95vmin; height: 95vmin; max-width: 550px; max-height: 550px; 
+            background: #ffffff; border-radius: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9), inset 0 0 20px rgba(0,0,0,0.5);
+            border: 6px solid var(--premium-gold); padding: 5px;
+            transform: perspective(1000px) rotateX(2deg);
+            transition: transform 0.5s;
+        }
+        #ludo-board-svg { width: 100%; height: 100%; border-radius: 12px; }
+
+        .token { 
+            r: 3.2%; stroke: #fff; stroke-width: 0.6; 
+            transition: cx 0.25s cubic-bezier(0.25, 1, 0.5, 1), cy 0.25s cubic-bezier(0.25, 1, 0.5, 1); 
+            cursor: pointer; filter: drop-shadow(3px 5px 5px rgba(0,0,0,0.7)); 
+        }
+        .token-highlight { stroke: var(--premium-gold); stroke-width: 2; animation: pulse 1s infinite; }
+        @keyframes pulse { 
+            0% { filter: drop-shadow(0 0 5px var(--premium-gold)); } 
+            50% { filter: drop-shadow(0 0 20px var(--premium-gold)); } 
+            100% { filter: drop-shadow(0 0 5px var(--premium-gold)); } 
+        }
+
+        /* --- Player Hubs --- */
+        .player-hub {
+            position: absolute; width: auto; min-width: 150px; display: flex; align-items: center; gap: 12px;
+            padding: 10px 15px; border-radius: 40px; 
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 2px solid rgba(255,255,255,0.1);
+            color: white; font-weight: 600; transition: all 0.4s ease;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .player-hub.active-player { 
+            box-shadow: 0 0 30px var(--premium-gold), inset 0 0 10px var(--premium-gold); 
+            border: 2px solid var(--premium-gold); background: rgba(0,0,0,0.8); transform: scale(1.1); z-index: 100;
+        }
+        .player-hub-name { max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1em; letter-spacing: 1px;}
+        
+        #hub-red    { top: -30px; left: -10px; }
+        #hub-green  { top: -30px; right: -10px; flex-direction: row-reverse; }
+        #hub-yellow { bottom: -30px; right: -10px; flex-direction: row-reverse; }
+        #hub-blue   { bottom: -30px; left: -10px; }
+        
+        .player-icon { width: 40px; height: 40px; border-radius: 50%; border: 3px solid white; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);}
+        .dice-container {
+            width: 50px; height: 50px; background: linear-gradient(135deg, #ffffff, #d4d4d4); border-radius: 12px;
+            box-shadow: 0 8px 15px rgba(0,0,0,0.6), inset 0 3px 5px white; cursor: pointer;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .dice-dot { fill: #111; }
+
+        /* --- Modals --- */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: center; z-index: 3000;
+        }
+        .modal-content {
+            background: linear-gradient(145deg, #1a1a24, #0d0d12); 
+            padding: 40px; border-radius: 25px; text-align: center;
+            max-width: 90%; width: 400px; border: 2px solid var(--premium-gold);
+            box-shadow: 0 20px 50px rgba(0,0,0,1), 0 0 30px rgba(255,215,0,0.2); color: white;
+        }
+        .modal-content h2 { color: var(--premium-gold); text-shadow: 0 0 10px rgba(212,175,55,0.5); font-size: 2em; margin-top:0;}
+        .modal-content input {
+             width: 85%; padding: 15px; margin: 15px 0; font-size: 1.1em; border-radius: 10px; 
+             border: 2px solid var(--premium-gold-dark); background: rgba(0,0,0,0.6); color: white;
+             outline: none; font-family: 'Poppins', sans-serif; text-align: center;
+        }
+        .modal-content input:focus { box-shadow: 0 0 15px var(--premium-gold); border-color: var(--premium-gold); }
+
+        #leaderboard-list {
+            list-style: none; padding: 0; max-height: 250px; overflow-y: auto;
+            text-align: left; background: rgba(0,0,0,0.5); border-radius: 15px; padding: 15px; border: 1px solid #444;
+        }
+        #leaderboard-list li { padding: 12px; border-bottom: 1px solid #333; font-size:1.1em; color:#eee;}
+        #leaderboard-list li strong { color: var(--premium-gold); font-size: 1.2em;}
+
+        .chat-options { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 25px;}
+        .chat-btn-item { padding: 12px 20px; width: auto; font-size: 1em; margin: 0; border-radius: 30px; background: rgba(255,255,255,0.05); border: 1px solid var(--premium-gold-dark);}
+        .chat-btn-item:hover { background: var(--premium-gold); color: black; box-shadow: 0 0 15px var(--premium-gold);}
+
+        /* --- Footer --- */
+        #footer {
+            position: absolute; bottom: 15px; left: 0; width: 100%;
+            text-align: center; color: #aaa; font-size: 1em; z-index: 2000; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        #footer a { color: var(--premium-gold); text-decoration: none; font-weight: 800; transition: 0.3s;}
+        #footer a:hover { color: #fff; text-shadow: 0 0 10px var(--premium-gold);}
+
+    </style>
+</head>
+<body>
+
+    <div id="top-bar">
+        <div class="menu-container">
+            <button id="menu-btn">⚙️ MENU</button>
+            <div id="menu-content">
+                <button id="toggle-sound-btn">🔊 সাউন্ড: অন</button>
+                <button id="open-chat-btn">💬 চ্যাট অপশন</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="player-selection-screen" class="screen">
+        <h1>LUDO <span style="color:white; font-size: 0.6em;">ULTRA</span></h1>
+        <button id="btn-vs-ai">🤖 কম্পিউটারের সাথে খেলুন</button>
+        <button id="btn-2-players">👥 ২ জন প্লেয়ার</button>
+        <button id="btn-3-players">🧑‍🤝‍🧑 ৩ জন প্লেয়ার</button>
+        <button id="btn-4-players">🌍 ৪ জন প্লেয়ার</button>
+        <button id="btn-leaderboard">🏆 লিডারবোর্ড</button>
+    </div>
+
+    <div id="game-screen" class="screen">
+        <div id="game-container"></div>
+    </div>
+    
+    <div id="player-name-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="player-name-modal-title">খেলোয়াড়দের নাম</h2>
+            <div id="player-name-inputs"></div>
+            <button id="start-game-btn" style="width: 100%; background: var(--premium-gold); color: black;">খেলা শুরু করুন</button>
+            <button class="close-modal-btn" onclick="document.getElementById('player-name-modal').style.display='none'" style="width: 100%; background: transparent; border: 1px solid #555;">বাতিল করুন</button>
+        </div>
+    </div>
+    
+    <div id="win-modal" class="modal">
+        <div class="modal-content">
+            <h2 id="win-message" style="font-size: 2.5em; color:#fff;"></h2>
+            <p style="color:#ccc;">লিডারবোর্ডের জন্য নাম সেভ করুন:</p>
+            <input type="text" id="winner-name-input" placeholder="বিজয়ীর নাম">
+            <button id="save-score-btn" style="background: var(--premium-gold); color: black; width: 100%;">সেভ করুন</button>
+            <button id="main-menu-btn" style="background: #222; width: 100%; border: 1px solid #444;">মেইন মেনু</button>
+        </div>
+    </div>
+
+    <div id="leaderboard-modal" class="modal">
+        <div class="modal-content">
+            <h2>🏆 লিডারবোর্ড</h2>
+            <ul id="leaderboard-list"><li>কোনো রেকর্ড নেই</li></ul>
+            <button id="close-leaderboard-btn" style="background: #ff3333; width: 100%;">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="chat-modal" class="modal">
+        <div class="modal-content">
+            <h2>💬 দ্রুত চ্যাট</h2>
+            <div class="chat-options">
+                <button class="chat-btn-item">👋 হ্যালো!</button>
+                <button class="chat-btn-item">🔥 দারুণ চাল!</button>
+                <button class="chat-btn-item">⏱️ জলদি চাল দিন!</button>
+                <button class="chat-btn-item">😂 হা হা হা</button>
+                <button class="chat-btn-item">😡 উফফ!</button>
+                <button class="chat-btn-item">🏆 আমিই জিতবো!</button>
+            </div>
+            <button onclick="document.getElementById('chat-modal').style.display='none'" style="margin-top: 25px; background: #333; width: 100%;">বন্ধ করুন</button>
+        </div>
+    </div>
+
+    <div id="footer">
+        Make by sakil | <a href="https://t.me/Sharechat_ns_098" target="_blank">Join Telegram</a>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- 100% WORKING SOUND SYSTEM ---
+        // আমরা সরাসরি JS Audio Object ব্যবহার করছি।
+        const soundFiles = {
+            dice: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound1.mp3'), // Click/Dice sound
+            move: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound2.mp3'), // Move sound
+            kill: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound3.mp3'), // Kill sound
+            win: new Audio('https://s3.amazonaws.com/freecodecamp/simonSound4.mp3')  // Win sound
+        };
+
+        let isSoundOn = true;
+        let audioUnlocked = false;
+
+        // ইউজারের প্রথম ক্লিকে সাউন্ড আনলক করার সিস্টেম (Mobile Chrome/Safari-এর জন্য বাধ্যতামুলক)
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            for (let key in soundFiles) {
+                let s = soundFiles[key];
+                s.volume = 0; // সাইলেন্ট করে প্লে করা হচ্ছে
+                s.play().then(() => {
+                    s.pause(); s.currentTime = 0; s.volume = 1; // আবার ঠিক করা হচ্ছে
+                }).catch(e => console.log("Audio unlock interaction needed"));
+            }
+            audioUnlocked = true;
+            document.removeEventListener('click', unlockAudio);
+            document.removeEventListener('touchstart', unlockAudio);
+        }
+        document.addEventListener('click', unlockAudio);
+        document.addEventListener('touchstart', unlockAudio);
+
+        function playSound(type) {
+            if (isSoundOn && soundFiles[type]) {
+                soundFiles[type].currentTime = 0;
+                soundFiles[type].play().catch(e => console.log("Sound error:", e));
+            }
+        }
+
+        const gameContainer = document.getElementById('game-container');
+        const winModal = document.getElementById('win-modal');
+        const winMessage = document.getElementById('win-message');
+        const leaderboardModal = document.getElementById('leaderboard-modal');
+        const playerNameModal = document.getElementById('player-name-modal');
+        const chatModal = document.getElementById('chat-modal');
+        
+        let numPlayers = 0, players = [], playerNames = {}, currentPlayerIndex = 0, diceValue = 0, turnState = 'ROLL';
+        let playerPositions = {}; let consecutiveSixes = {}; let boardSVG;
+        let currentWinnerColor = ''; let winners = []; let gameMode = 'vsPlayer';
+
+        const UNIT = 100 / 15;
+        const path = [
+            {x:1,y:6},{x:2,y:6},{x:3,y:6},{x:4,y:6},{x:5,y:6}, {x:6,y:5},{x:6,y:4},{x:6,y:3},{x:6,y:2},{x:6,y:1}, {x:6,y:0},{x:7,y:0},{x:8,y:0},
+            {x:8,y:1},{x:8,y:2},{x:8,y:3},{x:8,y:4},{x:8,y:5}, {x:9,y:6},{x:10,y:6},{x:11,y:6},{x:12,y:6},{x:13,y:6}, {x:14,y:6},{x:14,y:7},{x:14,y:8},
+            {x:13,y:8},{x:12,y:8},{x:11,y:8},{x:10,y:8},{x:9,y:8}, {x:8,y:9},{x:8,y:10},{x:8,y:11},{x:8,y:12},{x:8,y:13}, {x:8,y:14},{x:7,y:14},{x:6,y:14},
+            {x:6,y:13},{x:6,y:12},{x:6,y:11},{x:6,y:10},{x:6,y:9}, {x:5,y:8},{x:4,y:8},{x:3,y:8},{x:2,y:8},{x:1,y:8}, {x:0,y:8},{x:0,y:7},{x:0,y:6}
+        ].map(p => ({cx: (p.x + 0.5) * UNIT + '%', cy: (p.y + 0.5) * UNIT + '%'}));
+        
+        const homePaths = {
+            red: [{x:1,y:7},{x:2,y:7},{x:3,y:7},{x:4,y:7},{x:5,y:7},{x:6,y:7}].map(p=>({cx:(p.x+0.5)*UNIT+'%',cy:(p.y+0.5)*UNIT+'%'})),
+            green: [{x:7,y:1},{x:7,y:2},{x:7,y:3},{x:7,y:4},{x:7,y:5},{x:7,y:6}].map(p=>({cx:(p.x+0.5)*UNIT+'%',cy:(p.y+0.5)*UNIT+'%'})),
+            yellow: [{x:13,y:7},{x:12,y:7},{x:11,y:7},{x:10,y:7},{x:9,y:7},{x:8,y:7}].map(p=>({cx:(p.x+0.5)*UNIT+'%',cy:(p.y+0.5)*UNIT+'%'})),
+            blue: [{x:7,y:13},{x:7,y:12},{x:7,y:11},{x:7,y:10},{x:7,y:9},{x:7,y:8}].map(p=>({cx:(p.x+0.5)*UNIT+'%',cy:(p.y+0.5)*UNIT+'%'}))
+        };
+        const startPositions = { red: 0, green: 13, yellow: 26, blue: 39 };
+        const basePositions = {
+            red:    [{x:1.7,y:1.7},{x:1.7,y:3.7},{x:3.7,y:1.7},{x:3.7,y:3.7}].map(p=>({cx:p.x*UNIT+'%',cy:p.y*UNIT+'%'})),
+            green:  [{x:10.3,y:1.7},{x:10.3,y:3.7},{x:12.3,y:1.7},{x:12.3,y:3.7}].map(p=>({cx:p.x*UNIT+'%',cy:p.y*UNIT+'%'})),
+            yellow: [{x:10.3,y:10.3},{x:10.3,y:12.3},{x:12.3,y:10.3},{x:12.3,y:12.3}].map(p=>({cx:p.x*UNIT+'%',cy:p.y*UNIT+'%'})),
+            blue:   [{x:1.7,y:10.3},{x:1.7,y:12.3},{x:3.7,y:10.3},{x:3.7,y:12.3}].map(p=>({cx:p.x*UNIT+'%',cy:p.y*UNIT+'%'}))
+        };
+
+        // --- Menu Events ---
+        document.getElementById('menu-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            let m = document.getElementById('menu-content');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        });
+        document.addEventListener('click', (e) => { if (!e.target.closest('.menu-container')) document.getElementById('menu-content').style.display = 'none'; });
+        document.getElementById('toggle-sound-btn').addEventListener('click', (e) => {
+            isSoundOn = !isSoundOn;
+            e.target.textContent = isSoundOn ? '🔊 সাউন্ড: অন' : '🔇 সাউন্ড: অফ';
+            playSound('dice'); // Test sound
+        });
+        document.getElementById('open-chat-btn').addEventListener('click', () => { chatModal.style.display = 'flex'; });
+        document.querySelectorAll('.chat-btn-item').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const msg = e.target.innerText;
+                const name = (players.length > 0 && playerNames[players[currentPlayerIndex]]) ? playerNames[players[currentPlayerIndex]] : "খেলোয়াড়";
+                showTemporaryMessage(`${name}: ${msg}`);
+                chatModal.style.display = 'none';
+            });
+        });
+
+        // --- Game Logic ---
+        function createLudoBoardSVG() {
+            const svgNS = "http://www.w3.org/2000/svg"; boardSVG = document.createElementNS(svgNS, "svg");
+            boardSVG.setAttribute("id", "ludo-board-svg"); boardSVG.setAttribute("viewBox", "0 0 100 100");
+            const defs = document.createElementNS(svgNS, "defs");
+            ['red', 'green', 'yellow', 'blue'].forEach(c => {
+                const g = document.createElementNS(svgNS, "radialGradient"); g.id = `${c}TokenGradient`;
+                g.innerHTML = `<stop offset="0%" stop-color="var(--ludo-${c}-light)"></stop><stop offset="100%" stop-color="var(--ludo-${c})"></stop>`;
+                defs.appendChild(g);
+            });
+            boardSVG.appendChild(defs);
+            let boardMarkup = `<rect width="100" height="100" fill="#ffffff"></rect>
+                <rect width="${6*UNIT}" height="${6*UNIT}" fill="var(--ludo-red)"></rect><rect x="${9*UNIT}" width="${6*UNIT}" height="${6*UNIT}" fill="var(--ludo-green)"></rect>
+                <rect y="${9*UNIT}" width="${6*UNIT}" height="${6*UNIT}" fill="var(--ludo-blue)"></rect><rect x="${9*UNIT}" y="${9*UNIT}" width="${6*UNIT}" height="${6*UNIT}" fill="var(--ludo-yellow)"></rect>`;
+
+            const pathCoords = [...Array.from({length: 6}, (_, i) => ({x: i, y: 6})), ...Array.from({length: 6}, (_, i) => ({x: 6, y: 5 - i})), {x: 7, y: 0}, ...Array.from({length: 6}, (_, i) => ({x: 8, y: i})), ...Array.from({length: 6}, (_, i) => ({x: 9 + i, y: 6})), {x: 14, y: 7}, ...Array.from({length: 6}, (_, i) => ({x: 14 - i, y: 8})), ...Array.from({length: 6}, (_, i) => ({x: 8, y: 9 + i})), {x: 7, y: 14}, ...Array.from({length: 6}, (_, i) => ({x: 6 - i, y: 8})), ...Array.from({length: 6}, (_, i) => ({x: 0, y: 7 - i})), {x: 0, y: 7}];
+            const startingSpotCoords = { red: {x: 1, y: 6}, green: {x: 8, y: 1}, yellow: {x: 13, y: 8}, blue: {x: 6, y: 13} };
+            
+            pathCoords.forEach(c => {
+                let fillColor = '#fff';
+                if (c.x === 0 && c.y >= 1 && c.y <= 5) fillColor = 'var(--ludo-red)';
+                boardMarkup += `<rect x="${c.x * UNIT}" y="${c.y * UNIT}" width="${UNIT}" height="${UNIT}" fill="${fillColor}" stroke="#ccc" stroke-width="0.3"></rect>`;
+            });
+
+            for (const color in startingSpotCoords) {
+                const c = startingSpotCoords[color];
+                boardMarkup += `<rect x="${c.x * UNIT}" y="${c.y * UNIT}" width="${UNIT}" height="${UNIT}" fill="var(--ludo-${color})" stroke="#888" stroke-width="0.3"></rect>`;
+            }
+
+            ['red', 'green', 'yellow', 'blue'].forEach(color => {
+                for (let i = 0; i < 6; i++) {
+                    const c = homePaths[color][i];
+                    boardMarkup += `<rect x="${(parseFloat(c.cx.slice(0,-1)) - 0.5 * UNIT)}" y="${(parseFloat(c.cy.slice(0,-1)) - 0.5 * UNIT)}" width="${UNIT}" height="${UNIT}" fill="var(--ludo-${color})" stroke="#888" stroke-width="0.3"></rect>`;
+                }
+            });
+
+            const homeTriangles = [{path: `M${6*UNIT} ${6*UNIT} L${7.5*UNIT} ${7.5*UNIT} L${6*UNIT} ${9*UNIT} Z`, fill: 'var(--ludo-red)'}, {path: `M${6*UNIT} ${6*UNIT} L${7.5*UNIT} ${7.5*UNIT} L${9*UNIT} ${6*UNIT} Z`, fill: 'var(--ludo-green)'}, {path: `M${9*UNIT} ${9*UNIT} L${7.5*UNIT} ${7.5*UNIT} L${9*UNIT} ${6*UNIT} Z`, fill: 'var(--ludo-yellow)'}, {path: `M${9*UNIT} ${9*UNIT} L${7.5*UNIT} ${7.5*UNIT} L${6*UNIT} ${9*UNIT} Z`, fill: 'var(--ludo-blue)'}];
+            homeTriangles.forEach(t => { boardMarkup += `<path d="${t.path}" fill="${t.fill}" stroke="#666" stroke-width="0.2"></path>`; });
+            
+            boardMarkup += `<rect x="${UNIT}" y="${UNIT}" width="${4*UNIT}" height="${4*UNIT}" fill="white" rx="2"></rect><rect x="${10*UNIT}" y="${UNIT}" width="${4*UNIT}" height="${4*UNIT}" fill="white" rx="2"></rect><rect x="${UNIT}" y="${10*UNIT}" width="${4*UNIT}" height="${4*UNIT}" fill="white" rx="2"></rect><rect x="${10*UNIT}" y="${10*UNIT}" width="${4*UNIT}" height="${4*UNIT}" fill="white" rx="2"></rect>`;
+            boardSVG.innerHTML += boardMarkup;
+            gameContainer.appendChild(boardSVG);
+        }
+
+        function createDiceSVG(val) {
+            const p={1:[[50,50]],2:[[25,25],[75,75]],3:[[25,25],[50,50],[75,75]],4:[[25,25],[75,25],[25,75],[75,75]],5:[[25,25],[75,25],[50,50],[25,75],[75,75]],6:[[25,25],[75,25],[25,50],[75,50],[25,75],[75,75]]};
+            return `<svg viewBox="0 0 100 100" style="width:100%; height:100%; drop-shadow(0 5px 5px rgba(0,0,0,0.5))">${p[val].map(c=>`<circle cx="${c[0]}%" cy="${c[1]}%" r="10%" fill="#111"></circle>`).join('')}</svg>`;
+        }
+        function showScreen(screenId) { document.querySelectorAll('.screen').forEach(s => s.style.display = 'none'); document.getElementById(screenId).style.display = 'flex'; }
+
+        function setupGame(pCount) {
+            gameMode = 'vsPlayer'; numPlayers = pCount;
+            players = numPlayers===2 ? ['red','yellow'] : (numPlayers===3 ? ['red','green','yellow'] : ['red','green','yellow','blue']);
+            const nameInputs = document.getElementById('player-name-inputs'); nameInputs.innerHTML = '';
+            const colorMap = {'red': 'লাল', 'green': 'সবুজ', 'yellow': 'হলুদ', 'blue': 'নীল'};
+            players.forEach((c, i) => {
+                nameInputs.innerHTML += `<div style="margin-bottom: 5px;"><label style="color: var(--ludo-${c}); font-weight: 800; display:block; text-align:left; margin-left: 8%;">${colorMap[c]} প্লেয়ার:</label><input type="text" id="player-${c}" value="প্লেয়ার ${i + 1}"></div>`;
+            });
+            playerNameModal.style.display = 'flex';
+        }
+
+        document.getElementById('btn-vs-ai').addEventListener('click', () => {
+            gameMode = 'vsAI'; numPlayers = 2; players = ['yellow', 'red'];
+            document.getElementById('player-name-inputs').innerHTML = `<label style="color: var(--premium-gold); font-weight: 800; display:block; text-align:left; margin-left: 8%;">আপনার নাম:</label><input type="text" id="player-yellow" value="প্লেয়ার ১">`;
+            playerNameModal.style.display = 'flex';
+        });
+        document.getElementById('btn-2-players').addEventListener('click',()=>{setupGame(2);});
+        document.getElementById('btn-3-players').addEventListener('click',()=>{setupGame(3);});
+        document.getElementById('btn-4-players').addEventListener('click',()=>{setupGame(4);});
+        
+        document.getElementById('start-game-btn').addEventListener('click', () => {
+            if (gameMode === 'vsAI') { playerNames['yellow'] = document.getElementById('player-yellow').value || 'প্লেয়ার ১'; playerNames['red'] = 'কম্পিউটার'; } 
+            else { players.forEach(c => playerNames[c] = document.getElementById(`player-${c}`).value || `প্লেয়ার`); }
+            playerNameModal.style.display = 'none'; startGame();
+        });
+
+        function startGame() {
+            currentPlayerIndex=0; turnState='ROLL'; playerPositions={}; consecutiveSixes = {}; winners = [];
+            players.forEach(c => { playerPositions[c] = [-1, -1, -1, -1]; consecutiveSixes[c] = 0; });
+            if(boardSVG) boardSVG.remove();
+            createLudoBoardSVG(); generatePlayerHubs(); drawTokens(); updateActivePlayerHub();
+            showScreen('game-screen');
+        }
+
+        function generatePlayerHubs() {
+            gameContainer.querySelectorAll('.player-hub').forEach(h=>h.remove());
+            ['red','green','yellow','blue'].forEach(c=>{
+                const hub=document.createElement('div'); hub.className='player-hub'; hub.id=`hub-${c}`;
+                const name=document.createElement('span'); name.className = 'player-hub-name';
+                const icon=document.createElement('div'); icon.className='player-icon'; icon.style.background=`radial-gradient(var(--ludo-${c}-light), var(--ludo-${c}))`;
+                const diceCont=document.createElement('div'); diceCont.className='dice-container'; diceCont.innerHTML=createDiceSVG(1);
+                if (players.includes(c)) {
+                    name.textContent = playerNames[c];
+                    if (!(gameMode === 'vsAI' && c === 'red')) diceCont.addEventListener('click', handleDiceClick);
+                } else { hub.style.display='none'; }
+                hub.append(icon, name, diceCont); gameContainer.appendChild(hub);
+            });
+        }
+        
+        function handleDiceClick() { if (turnState === 'ROLL' && players[currentPlayerIndex] === this.parentElement.id.split('-')[1]) rollDice(); }
+
+        function getPositionCoordinates(color,index,pos){
+            if(pos===-1)return basePositions[color][index];
+            if(pos===100)return homePaths[color][5];
+            if(pos>51)return homePaths[color][pos-52]; 
+            return path[(startPositions[color]+pos)%path.length];
+        }
+
+        function drawTokens() {
+            boardSVG.querySelectorAll('.token').forEach(t=>t.remove());
+            const occupied = {};
+            players.forEach(c => playerPositions[c].forEach((pos, i) => {
+                let key = pos === -1 ? `base_${c}_${i}` : (pos > 51 ? `home_${c}_${pos}` : `path_${(startPositions[c] + pos) % path.length}`);
+                if (!occupied[key]) occupied[key] = []; occupied[key].push({ c, i });
+            }));
+            Object.values(occupied).forEach(group => {
+                if (group.length > 1) group.forEach((t, i) => { const angle = (i / group.length) * 2 * Math.PI; t.ox = Math.cos(angle) * 0.7; t.oy = Math.sin(angle) * 0.7; });
+            });
+            players.forEach(c=>playerPositions[c].forEach((pos,i)=>{
+                const {cx,cy} = getPositionCoordinates(c,i,pos);
+                const token=document.createElementNS("http://www.w3.org/2000/svg","circle");
+                token.setAttribute("class",`token ${c}`); token.setAttribute("fill",`url(#${c}TokenGradient)`);
+                let fcx = parseFloat(cx), fcy = parseFloat(cy);
+                let key = pos === -1 ? `base_${c}_${i}` : (pos > 51 ? `home_${c}_${pos}` : `path_${(startPositions[c] + pos) % path.length}`);
+                if(occupied[key] && occupied[key].length > 1) {
+                   const tInfo = occupied[key].find(t => t.c === c && t.i === i);
+                   if(tInfo && tInfo.ox) { fcx += tInfo.ox; fcy += tInfo.oy; }
+                }
+                token.setAttribute("cx", fcx + '%'); token.setAttribute("cy", fcy + '%');
+                token.dataset.color=c; token.dataset.index=i;
+                token.addEventListener('click',handleTokenClick); boardSVG.appendChild(token);
+            }));
+        }
+
+        async function rollDice(isAI = false) {
+            if(turnState!=='ROLL')return; turnState='MOVE';
+            playSound('dice');
+            diceValue=Math.floor(Math.random()*6)+1;
+            const activeDice=document.querySelector(`#hub-${players[currentPlayerIndex]} .dice-container`);
+            if(activeDice){
+                activeDice.style.transition='transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'; activeDice.style.transform=`rotate(360deg) scale(1.2)`;
+                await new Promise(res => setTimeout(res, 200));
+                activeDice.innerHTML=createDiceSVG(diceValue); activeDice.style.transform='rotate(0deg) scale(1)';
+                await new Promise(res => setTimeout(res, 300));
+            }
+            handlePostRoll(isAI);
+        }
+
+        function handlePostRoll(isAI = false) {
+            const c = players[currentPlayerIndex];
+            if (diceValue === 6) consecutiveSixes[c]++; else consecutiveSixes[c] = 0;
+            if (consecutiveSixes[c] === 3) {
+                consecutiveSixes[c] = 0; showTemporaryMessage(`🚫 ৩ বার ৬! চাল বাতিল।`);
+                setTimeout(switchPlayer, 1000); return;
+            }
+            const movable = getMovableTokens();
+            if (movable.length === 0) setTimeout(switchPlayer, 500);
+            else if (isAI) setTimeout(()=>moveToken(c, chooseBestMove(movable)), 500);
+            else if (movable.length === 1) moveToken(c, movable[0]);
+            else movable.forEach(i=>boardSVG.querySelector(`.token[data-color='${c}'][data-index='${i}']`)?.classList.add('token-highlight'));
+        }
+        
+        function getMovableTokens() {
+            const c=players[currentPlayerIndex]; if (winners.includes(c)) return [];
+            return playerPositions[c].map((pos,i)=>({pos,i})).filter(item=>(item.pos===-1?diceValue===6:item.pos<100&&item.pos+diceValue<=57)).map(item=>item.i);
+        }
+        function handleTokenClick(e){if(e.target.classList.contains('token-highlight'))moveToken(e.target.dataset.color,parseInt(e.target.dataset.index));}
+        
+        async function moveToken(c, tIndex) {
+            boardSVG.querySelectorAll('.token-highlight').forEach(t=>t.classList.remove('token-highlight'));
+            const cPos = playerPositions[c][tIndex]; const isStarting = cPos === -1 && diceValue === 6;
+            let nPos = isStarting ? 0 : cPos + diceValue; if (nPos > 57) nPos = 57;
+            
+            if (!isStarting) {
+                 for(let i = 1; i <= diceValue; i++) {
+                    const sPos = cPos + i; if (sPos > 57) break;
+                    const coords = getPositionCoordinates(c, tIndex, sPos);
+                    const token = boardSVG.querySelector(`.token[data-color='${c}'][data-index='${tIndex}']`);
+                    if(token) { token.setAttribute('cx', coords.cx); token.setAttribute('cy', coords.cy); playSound('move'); await new Promise(r => setTimeout(r, 150)); }
+                }
+            }
+            playerPositions[c][tIndex] = (nPos === 57) ? 100 : nPos;
+            const killed = checkForKill(c, tIndex);
+            if (killed.length > 0) {
+                playSound('kill'); showTemporaryMessage(`⚔️ দারুন হিট!`);
+                killed.forEach(t => playerPositions[t.c][t.i] = -1);
+            }
+            drawTokens();
+
+            if (playerPositions[c].every(pos => pos === 100)) handlePlayerWin(c);
+            else if (diceValue !== 6 && killed.length === 0) switchPlayer();
+            else { turnState = 'ROLL'; if(gameMode === 'vsAI' && players[currentPlayerIndex] === 'red' && !winners.includes('red')) setTimeout(playAITurn, 1000); }
+        }
+
+        function handlePlayerWin(c) {
+            if (winners.includes(c)) return; winners.push(c);
+            const rank = winners.length; showTemporaryMessage(`🎉 ${playerNames[c]} ${rank===1?'প্রথম':'দ্বিতীয়'} হয়েছেন!`);
+            if (rank === 1) playSound('win');
+            document.getElementById(`hub-${c}`).style.opacity = '0.5';
+            if (winners.length >= numPlayers - 1) setTimeout(showGameOverScreen, 1500);
+            else if (diceValue !== 6) switchPlayer();
+            else { turnState = 'ROLL'; if (gameMode === 'vsAI' && players[currentPlayerIndex] === 'red') setTimeout(playAITurn, 1000); }
+        }
+
+        function checkForKill(moverC, moverI) {
+            const safeSpots = [0, 8, 13, 21, 26, 34, 39, 47]; const mPos = playerPositions[moverC][moverI];
+            if (mPos < 0 || mPos > 51) return [];
+            const globalMPos = (startPositions[moverC] + mPos) % path.length;
+            if (safeSpots.includes(globalMPos)) return [];
+            let killed = [];
+            players.forEach(pC => {
+                if (pC === moverC) return;
+                playerPositions[pC].forEach((tPos, tI) => {
+                    if (tPos >= 0 && tPos <= 51 && globalMPos === (startPositions[pC] + tPos) % path.length) killed.push({c: pC, i: tI});
+                });
+            }); return killed;
+        }
+        
+        function switchPlayer() { 
+            if (winners.length >= numPlayers - 1) return;
+            do { currentPlayerIndex = (currentPlayerIndex + 1) % numPlayers; } while (winners.includes(players[currentPlayerIndex]));
+            turnState = 'ROLL'; updateActivePlayerHub();
+            if (gameMode === 'vsAI' && players[currentPlayerIndex] === 'red') setTimeout(playAITurn, 1000);
+        }
+
+        function updateActivePlayerHub() {
+            document.querySelectorAll('.player-hub').forEach(h=>h.classList.remove('active-player'));
+            const c = players[currentPlayerIndex]; if (c && !winners.includes(c)) document.getElementById(`hub-${c}`)?.classList.add('active-player');
+        }
+        
+        function playAITurn() { if (turnState === 'ROLL' && !winners.includes('red')) rollDice(true); }
+        function chooseBestMove(m) { return m[0]; } // AI logic simplified for space, defaults to first available.
+
+        function showGameOverScreen() {
+            winMessage.innerHTML = '🎉 খেলা শেষ! 🎉';
+            const firstC = winners[0];
+            if (firstC) {
+                currentWinnerColor = firstC;
+                document.getElementById('winner-name-input').value = playerNames[firstC];
+            }
+            winModal.style.display = 'flex';
+        }
+
+        function showTemporaryMessage(msg) {
+            let el = document.getElementById('temp-msg');
+            if (!el) {
+                el = document.createElement('div'); el.id = 'temp-msg';
+                Object.assign(el.style, { position:'absolute', top:'15%', left:'50%', transform:'translate(-50%,-50%)', background:'var(--premium-gold)', color:'black', padding:'12px 25px', borderRadius:'30px', zIndex:'4000', fontWeight:'800', display:'none', transition:'0.4s ease' });
+                document.body.appendChild(el);
+            }
+            el.textContent = msg; Object.assign(el.style, {display:'block', opacity:'1'});
+            setTimeout(() => { el.style.opacity='0'; setTimeout(()=>el.style.display='none',400); }, 2500);
+        }
+
+        document.getElementById('main-menu-btn').addEventListener('click',()=>{ winModal.style.display='none'; showScreen('player-selection-screen'); });
+        document.getElementById('save-score-btn').addEventListener('click', () => {
+            const name = document.getElementById('winner-name-input').value.trim();
+            if (name && currentWinnerColor) {
+                const lb = JSON.parse(localStorage.getItem('ludoLB') || '[]' ); lb.push({ n: name, d: new Date().toLocaleDateString('bn-BD') });
+                localStorage.setItem('ludoLB', JSON.stringify(lb));
+            }
+            winModal.style.display = 'none'; showScreen('player-selection-screen');
+        });
+
+        document.getElementById('btn-leaderboard').addEventListener('click', () => {
+            const lb = JSON.parse(localStorage.getItem('ludoLB') || '[]' );
+            document.getElementById('leaderboard-list').innerHTML = lb.length === 0 ? '<li>কোনো রেকর্ড নেই</li>' : lb.map(e => `<li><strong>${e.n}</strong> - ${e.d}</li>`).join('');
+            leaderboardModal.style.display = 'flex';
+        });
+        document.getElementById('close-leaderboard-btn').addEventListener('click', () => leaderboardModal.style.display = 'none');
+
+        showScreen('player-selection-screen');
+    });
+    </script>
+</body>
+</html>
